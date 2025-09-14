@@ -12,39 +12,63 @@ body {
 table {
     border-collapse: collapse;
     width: 100%;
-    table-layout: fixed;
     margin-bottom: 10px;
-    min-width: 600px;
-    font-size: 0.8em
+    font-size: 0.8em;
 }
+
+/* horizontales Scrollen ermöglichen */
+.table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch; /* für sanfteres Scrollen auf iOS */
+}
+
+/* Standard-Zellen */
 th, td {
     border: 1px solid #ddd;
     padding: 8px;
     word-wrap: break-word;
 }
+
+/* Tabellenkopf */
 thead th {
     background: #f4f4f4;
+    text-align: center;
 }
+
+/* Zeilenüberschriften */
 th[scope="row"] {
     font-weight: 600;
     background: #fafafa;
     text-align: left;
 }
-td, thead th {
+
+td {
     text-align: center;
 }
+
 caption {
     font-weight: 700;
     margin-bottom: 8px;
 }
+
 .button-container {
     text-align: right;
     margin-bottom: 20px;
 }
+
 .button-container button {
     padding: 5px 10px;
     margin-left: 5px;
 }
+
+/* Zusatz: Ab 600px wieder table-layout: fixed aktivieren */
+@media screen and (min-width: 600px) {
+    table {
+        table-layout: fixed;
+        min-width: 600px;
+    }
+}
+
 </style>
 </head>
 <body>
@@ -486,3 +510,4 @@ init();
 </script>
 </body>
 </html>
+
