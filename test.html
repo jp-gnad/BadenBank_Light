@@ -1,0 +1,488 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Qualifikationslisten Deutschlanpokal 2025 - Prototyp </title>
+<style>
+body {
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    padding: 20px;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    table-layout: fixed;
+    margin-bottom: 10px;
+    min-width: 600px;
+    font-size: 0.8em
+}
+th, td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    word-wrap: break-word;
+}
+thead th {
+    background: #f4f4f4;
+}
+th[scope="row"] {
+    font-weight: 600;
+    background: #fafafa;
+    text-align: left;
+}
+td, thead th {
+    text-align: center;
+}
+caption {
+    font-weight: 700;
+    margin-bottom: 8px;
+}
+.button-container {
+    text-align: right;
+    margin-bottom: 20px;
+}
+.button-container button {
+    padding: 5px 10px;
+    margin-left: 5px;
+}
+</style>
+</head>
+<body>
+<h1>Quallilisten Deutschlanpokal 2025 - Prototyp</h1>
+<h2>Männer</h2>
+<div id="male-table"></div>
+<div class="button-container">
+    <button id="male-prev">Zurück</button>
+    <button id="male-next">Weiter</button>
+</div>
+<h2>Frauen</h2>
+<div id="female-table"></div>
+<div class="button-container">
+    <button id="female-prev">Zurück</button>
+    <button id="female-next">Weiter</button>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+const EXCEL_URL = "https://raw.githubusercontent.com/jp-gnad/BadenBank_Light/main/test.xlsx";
+const RECORDS_URL = "https://raw.githubusercontent.com/jp-gnad/BadenBank_Light/main/records.xlsx";
+const PAGE_SIZE = 8;
+const cutoffDate = new Date(2024, 10, 15); // Monate 0-basiert: 10 = November
+// --- Abgesagte Namen ---
+// Einfach hier die Namen reinschreiben (müssen genau so wie in den Daten stehen)
+const canceledNames = ["Bocksnick, Andreas", "Landes, Marlene", "Blonski, Regina"]
+
+function isCanceled(name) {
+    return canceledNames.includes((name || "").trim());
+}
+
+let malePage = 0;
+let femalePage = 0;
+let maleData = [];
+let femaleData = [];
+let headers = [];
+let records = {};
+
+class CalculatorDiscipline {
+    constructor(time, record){
+        this.time = time;
+        this.record = record;
+    }
+    getPoints(){
+        if(this.time <= 0.005) return 0;
+        const ratio = this.time / this.record;
+        if(ratio >= 5) return 0;
+        if(ratio >= 2) return Math.round((2000/3 - 400/3*ratio)*100)/100;
+        return Math.round((467*ratio*ratio - 2001*ratio + 2534)*100)/100;
+    }
+}
+
+function parseTime(value){
+    if(!value) return 0;
+    value = String(value).trim();
+    const parts = value.split(':');
+    if(parts.length === 2){
+        const min = parseInt(parts[0]) || 0;
+        const sec = parseFloat(parts[1].replace(',', '.')) || 0;
+        return min*60 + sec;
+    }
+    return parseFloat(value.replace(',', '.')) || 0;
+}
+
+function formatTime(seconds) {
+    if (!seconds || isNaN(seconds)) return '';
+    const min = Math.floor(seconds / 60);
+    const sec = seconds % 60;
+    // Sekunden mit führender Null, zwei Nachkommastellen, Komma als Dezimaltrennzeichen
+    const secStr = sec.toFixed(2).padStart(5, '0').replace('.', ',');
+    return `${min}:${secStr}`;
+}
+
+
+function mergeBestTimesAfterCutoff(rows, headers, cutoffDate) {
+    const nameMap = new Map();
+
+    rows.forEach(row => {
+        const name = row['Name'] || row['name'];
+        const excelDate = row[headers[9]];
+        let birthYear = row[headers[11]]; // Spalte L
+
+        // Wenn Name fehlt, Datum fehlt, Datum vor Cutoff oder Jahrgang >= 10 → überspringen
+        if (!name || !excelDate || ((typeof excelDate === 'number' ? new Date((excelDate - 25569) * 86400 * 1000) : new Date(excelDate)) <= cutoffDate) || !birthYear || parseInt(birthYear, 10) >= 10) {
+            return; 
+        }
+
+        // Hier geht es weiter: Name, Datum und Jahrgang passen
+        let rowDate = typeof excelDate === 'number' ? new Date((excelDate - 25569) * 86400 * 1000) : new Date(excelDate);
+        birthYear = parseInt(birthYear, 10);
+
+        if (!nameMap.has(name)) {
+            const entry = { ...row };
+            for (let j = 2; j < 9; j++) {
+                const col = headers[j];
+                entry[col + '_wk'] = row['Wettkampf'] || '';
+            }
+            nameMap.set(name, entry);
+        } else {
+            const existing = nameMap.get(name);
+            for (let j = 2; j < 9; j++) {
+                const col = headers[j];
+                const oldTime = parseTime(existing[col]);
+                const newTime = parseTime(row[col]);
+                if (newTime > 0 && (oldTime === 0 || newTime < oldTime)) {
+                    existing[col] = row[col];
+                    existing[col + '_wk'] = row['Wettkampf'] || '';
+                }
+            }
+            nameMap.set(name, existing);
+        }
+    });
+
+    return Array.from(nameMap.values());
+}
+
+function renderTable(containerId, data, page) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+
+    const start = page * PAGE_SIZE;
+    const pageRows = data.slice(start, start + PAGE_SIZE);
+
+    // Scroll-Container erstellen
+    const scrollDiv = document.createElement('div');
+    scrollDiv.style.overflowX = 'auto';  // horizontales Scrollen aktivieren
+    scrollDiv.style.width = '100%';
+
+    const table = document.createElement('table');
+
+    // --- THEAD ---
+    const thead = document.createElement('thead');
+    const trHeader = document.createElement('tr');
+
+    // Sichtbare Header: Name (Spalte B = headers[1]), dann Disziplinen bis vor den letzten 2 Spalten
+    const visibleHeaders = [headers[1], ...headers.slice(2, headers.length - 3)];
+
+    visibleHeaders.forEach((h, index) => {
+        const th = document.createElement('th');
+
+        // Header-Inhalt
+        if (h.toLowerCase() === 'punkte' || h === headers[1]) {
+            th.textContent = h;
+        } else {
+            const gender = containerId === 'female-table' ? 'w' : 'm';
+            const disciplineKey = h.trim();
+            const wr = records[gender][disciplineKey] || 0;
+            th.innerHTML =
+                h +
+                (wr
+                    ? '<br><small style="font-size:0.8em; display:block; line-height:1.2; margin:0; padding:0; font-weight:normal;">' +
+                      formatTime(wr) +
+                      '</small>'
+                    : '');
+        }
+
+        // Spaltenbreite setzen
+        if (index === 0) th.style.width = '13%'; // Name
+        else if (index === 1) th.style.width = '5%'; // Punkte
+        else th.style.width = ''; // restliche Spalten automatisch
+
+        th.style.textAlign = 'center';
+        if (h === headers[1]) th.style.textAlign = 'left';
+        trHeader.appendChild(th);
+    });
+
+    thead.appendChild(trHeader);
+    table.appendChild(thead);
+
+    // --- TBODY ---
+    const tbody = document.createElement('tbody');
+    pageRows.forEach((row, idx) => {
+        const tr = document.createElement('tr');
+
+        // Top-6 Highlight (global, nicht nur pro Seite)
+        const globalIndex = start + idx;
+        if (globalIndex < 6) {
+            if (containerId === 'male-table') {
+                tr.style.backgroundColor = 'rgba(173, 216, 230, 0.4)'; // hellblau
+            } else if (containerId === 'female-table') {
+                tr.style.backgroundColor = 'rgba(255, 182, 193, 0.4)'; // hellrot/rosa
+            }
+        }
+
+        visibleHeaders.forEach(h => {
+            const td = document.createElement('td');
+if (h.toLowerCase() === 'punkte') {
+    td.textContent = row['Punkte'];
+} else if (h.toLowerCase() === 'name') { // Name-Spalte
+    const name = row[headers[1]] || ''; // Spalte A
+    let year = row[headers[11]];        // Spalte J
+    if (year !== undefined && year !== '') {
+        year = parseInt(year, 10);
+        const yearStr = String(year).padStart(2, '0');
+        td.textContent = `${name} - ${yearStr}`;
+    } else {
+        td.textContent = name;
+    }
+} else { // alle anderen Spalten
+    const t = parseTime(row[h]); // Zeit
+    const wk = row[h + '_wk'] || ''; // Wettkampf
+    td.innerHTML = t
+        ? `${formatTime(t)}<br><small style="font-size:0.7em; display:block; line-height:1; margin:0; padding:0;">${wk}</small>`
+        : '';
+}
+
+            td.style.textAlign = h === headers[1] ? 'left' : 'center';
+            tr.appendChild(td);
+
+if (h.toLowerCase() === 'punkte') {
+    // Abgesagte → statt Punkten "Abgesagt" anzeigen
+    if (isCanceled(row['Name'])) {
+        td.textContent = 'Abgesagt';
+	td.style.color = 'rgb(227,6,19)'; // Rot
+    } else {
+        td.textContent = row['Punkte'] !== undefined ? row['Punkte'] : '';
+	td.style.color = '';
+    }
+}
+        });
+
+        tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    scrollDiv.appendChild(table);
+    container.appendChild(scrollDiv);
+
+// --- Filter: mindestens 3 Disziplinen ---
+let rows = Array.from(tbody.querySelectorAll('tr'));
+rows.forEach(tr => {
+    const cells = Array.from(tr.querySelectorAll('td')).slice(2); // nur Disziplinen-Spalten
+    const validCount = cells.reduce((count, td) => td.textContent.trim() !== '' ? count + 1 : count, 0);
+    if (validCount < 3) tr.remove();
+});
+
+
+}
+
+
+
+
+
+// Navigation Buttons
+function setupButtons(){
+    document.getElementById('male-prev').onclick = ()=>{
+        if(malePage>0) malePage--;
+        renderTable('male-table', maleData, malePage);
+    };
+    document.getElementById('male-next').onclick = ()=>{
+        if((malePage+1)*PAGE_SIZE < maleData.length) malePage++;
+        renderTable('male-table', maleData, malePage);
+    };
+    document.getElementById('female-prev').onclick = ()=>{
+        if(femalePage>0) femalePage--;
+        renderTable('female-table', femaleData, femalePage);
+    };
+    document.getElementById('female-next').onclick = ()=>{
+        if((femalePage+1)*PAGE_SIZE < femaleData.length) femalePage++;
+        renderTable('female-table', femaleData, femalePage);
+    };
+}
+
+
+
+async function loadRecords() {
+    try {
+        const resp = await fetch(RECORDS_URL);
+        const ab = await resp.arrayBuffer();
+        const wb = XLSX.read(ab, { type: 'array' });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+
+        const records = { m: {}, w: {} };
+        const data = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+
+        data.forEach(row => {
+            const parts = row['Gender - Disziplin'].trim().split(' - '); // trennt "m" und "100m Lifesaver"
+const gender = parts[0].trim();  // "m" oder "w"
+const discipline = parts[1].trim(); // "100m Lifesaver"
+const seconds = parseTime(row['World Record']);
+const personName = row[headers[1]];
+
+if (gender && discipline) {
+    records[gender][discipline] = seconds;
+}
+
+        });
+
+        return records;
+    } catch (e) {
+        console.error(e);
+        return { m: {}, w: {} };
+    }
+}
+async function loadAndShow() {
+    try {
+        const resp = await fetch(EXCEL_URL);
+        const ab = await resp.arrayBuffer();
+        const wb = XLSX.read(ab, { type: 'array' });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+
+        let json = XLSX.utils.sheet_to_json(sheet, { defval: '' });
+        headers = Object.keys(json[0] || {});
+
+        // --- Map nur mit Zeiten nach Cutoff erstellen ---
+        const nameMap = new Map();
+
+        json.forEach(row => {
+            const excelDate = row[headers[9]];
+            if (!excelDate) return;
+
+            let rowDate;
+            if (typeof excelDate === 'number') {
+                rowDate = new Date((excelDate - 25569) * 86400 * 1000);
+            } else {
+                rowDate = new Date(excelDate);
+            }
+
+            // Nur Personen nach Cutoff berücksichtigen
+            if (rowDate <= cutoffDate) return;
+
+            const name = row['Name'];
+            if (!name) return;
+
+            if (!nameMap.has(name)) {
+                const entry = { ...row };
+                for (let j = 2; j <= 8; j++) {
+                    const col = headers[j];
+                    entry[col + '_wk'] = row['Wettkampf'] || '';
+                }
+                nameMap.set(name, entry);
+            } else {
+                // Merge-Zeiten bei doppeltem Eintrag
+                const existing = nameMap.get(name);
+                for (let j = 2; j <= 8; j++) {
+                    const col = headers[j];
+                    const oldTime = parseTime(existing[col]);
+                    const newTime = parseTime(row[col]);
+                    if (newTime > 0 && (oldTime === 0 || newTime < oldTime)) {
+                        existing[col] = row[col];
+                        existing[col + '_wk'] = row['Wettkampf'] || '';
+                    }
+                }
+                nameMap.set(name, existing);
+            }
+        });
+
+        // --- Array aus der Map erstellen ---
+        let allData = Array.from(nameMap.values());
+
+        // --- Punkteberechnung nur für Zeiten nach Cutoff ---
+        allData.forEach(r => {
+            const pointsArr = [];
+            for (let j = 2; j <= 8; j++) {
+                const col = headers[j];
+                const time = parseTime(r[col]);
+                if (!time) continue;
+
+                const gender = r['Gender'].toLowerCase() === 'w' ? 'w' : 'm';
+                const recordVal = records[gender][col] || 40;
+                const points = new CalculatorDiscipline(time, recordVal).getPoints();
+                pointsArr.push(points);
+            }
+
+            // Top 4 Punkte summieren
+            pointsArr.sort((a, b) => b - a);
+            r['Punkte'] = Math.round(pointsArr.slice(0, 4).reduce((a, b) => a + b, 0) * 100) / 100;
+        });
+
+        // --- Daten nach Geschlecht filtern ---
+        maleData = allData.filter(r => !r['Gender'].toLowerCase().startsWith('w'));
+        femaleData = allData.filter(r => r['Gender'].toLowerCase().startsWith('w'));
+
+        // --- Sortieren nach Punkten ---
+        maleData.sort((a, b) => b['Punkte'] - a['Punkte']);
+        femaleData.sort((a, b) => b['Punkte'] - a['Punkte']);
+
+        renderTable('male-table', maleData, malePage);
+        renderTable('female-table', femaleData, femalePage);
+        setupButtons();
+	
+	// --- Sortieren nach Punkten, abgesagte nach hinten ---
+maleData.sort((a, b) => {
+    const aCanceled = isCanceled(a['Name']);
+    const bCanceled = isCanceled(b['Name']);
+
+    if (aCanceled && !bCanceled) return 1;   // a nach hinten
+    if (!aCanceled && bCanceled) return -1;  // b nach hinten
+    if (aCanceled && bCanceled) return 0;    // beide abgesagt → gleich
+
+    return (b['Punkte'] || 0) - (a['Punkte'] || 0);
+});
+
+femaleData.sort((a, b) => {
+    const aCanceled = isCanceled(a['Name']);
+    const bCanceled = isCanceled(b['Name']);
+
+    if (aCanceled && !bCanceled) return 1;
+    if (!aCanceled && bCanceled) return -1;
+    if (aCanceled && bCanceled) return 0;
+
+    return (b['Punkte'] || 0) - (a['Punkte'] || 0);
+});
+
+function sortAfterCleanup(data) {
+    // Abgesagte ans Ende
+    data.sort((a, b) => {
+        const aCanceled = isCanceled(a['Name']);
+        const bCanceled = isCanceled(b['Name']);
+        if (aCanceled && !bCanceled) return 1;
+        if (!aCanceled && bCanceled) return -1;
+
+        // Danach nach Punkten sortieren
+        return (b['Punkte'] || 0) - (a['Punkte'] || 0);
+    });
+}
+
+// Beispiel:
+sortAfterCleanup(maleData);
+sortAfterCleanup(femaleData);
+
+// --- Danach erst Tabellen rendern ---
+renderTable('male-table', maleData, malePage);
+renderTable('female-table', femaleData, femalePage);
+setupButtons();
+
+	
+    } catch (e) {
+        console.error(e);
+    }
+}
+
+async function init(){
+    records = await loadRecords();
+    await loadAndShow();
+}
+
+init();
+</script>
+</body>
+</html>
