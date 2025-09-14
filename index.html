@@ -63,11 +63,20 @@ caption {
 
 /* Zusatz: Ab 600px wieder table-layout: fixed aktivieren */
 @media screen and (min-width: 600px) {
-    table {
+    /* scrollbarer Container */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch; /* sanftes Scrollen auf iOS */
+    }
+
+    /* Tabelle selbst */
+    .table-container table {
         table-layout: fixed;
-        min-width: 2000px;
+        min-width: 1200px; /* breiter als Bildschirm */
+        width: auto;        /* passt sich dem Inhalt an */
     }
 }
+
 
 </style>
 </head>
@@ -510,6 +519,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
