@@ -257,13 +257,14 @@ if (h.toLowerCase() === 'punkte') {
 
     // zusätzlicher Absatz für globalIndex < 6
     if (globalIndex < 6) {
-        // Geschlecht bestimmen (männlich = default)
-        const geschlecht = (row['Geschlecht'] || row['gender'] || 'm').toString().toLowerCase();
-        let color = 'rgb(5,105,180)'; // Männerfarbe
-
-        if (geschlecht === 'w' || geschlecht === 'frau' || geschlecht === 'female') {
-            color = 'rgb(127,6,19)'; // Frauenfarbe
-        }
+        // Gender aus Spalte B
+		const geschlecht = (row[headers[1]] || 'm').toString().toLowerCase();
+		
+		// Farbe abhängig vom Gender
+		let color = 'rgb(5,105,180)'; // Männerfarbe
+		if (geschlecht === 'w') {
+		    color = 'rgb(127,6,19)'; // Frauenfarbe
+		}
 
 		cellContent += `<span style="font-size:6px; display:block; line-height:1; margin:0; padding:0; color:${color};">Vorläufig Gesetzt</span>`;
     }
@@ -515,6 +516,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
