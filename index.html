@@ -245,11 +245,24 @@ if (h.toLowerCase() === 'punkte') {
     const name = row[headers[1]] || ''; // Spalte A
     let year = row[headers[11]];        // Spalte J
     if (year !== undefined && year !== '') {
-        year = parseInt(year, 10);
-        const yearStr = String(year).padStart(2, '0');
-        td.textContent = `${name} (${yearStr})`;
-    } else {
-        td.textContent = name;
+    year = parseInt(year, 10);
+    const yearStr = String(year).padStart(2, '0');
+    
+    // Name und Jahr
+    let cellContent = `${name} (${yearStr})`;
+    
+    // zusätzlicher Absatz für globalIndex < 6
+    if (globalIndex < 6) {
+        cellContent += `<br><span style="font-size:6px;">Vorläufig Gesetzt</span>`;
+    }
+    
+    td.innerHTML = cellContent;
+} else {
+    td.textContent = name;
+    
+    // optional auch hier prüfen, ob globalIndex < 6
+    if (globalIndex < 6) {
+        td.innerHTML += `<br><span style="font-size:6px;">Vorläufig Gesetzt</span>`;
     }
 } else { // alle anderen Spalten
     const t = parseTime(row[h]); // Zeit
@@ -494,6 +507,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
