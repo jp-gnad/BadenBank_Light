@@ -76,6 +76,7 @@ const EXCEL_URL = "https://raw.githubusercontent.com/jp-gnad/BadenBank_Light/mai
 const RECORDS_URL = "https://raw.githubusercontent.com/jp-gnad/BadenBank_Light/main/records.xlsx";
 const PAGE_SIZE = 8;
 const cutoffDate = new Date(2024, 10, 15); // Monate 0-basiert: 10 = November
+const MIN_POINTS = 2000;  // Mindestpunkte, um berücksichtigt zu werden
 // --- Abgesagte Namen ---
 // Einfach hier die Namen reinschreiben (müssen genau so wie in den Daten stehen)
 const canceledNames = ["Bocksnick, Andreas", "Landes, Marlene", "Blonski, Regina"]
@@ -442,11 +443,17 @@ async function loadAndShow() {
             // Top 4 Punkte summieren
             pointsArr.sort((a, b) => b - a);
             r['Punkte'] = (pointsArr.slice(0, 4).reduce((a, b) => a + b, 0)).toFixed(2);
+
         });
 
         // --- Daten nach Geschlecht filtern ---
         maleData = allData.filter(r => !r['Gender'].toLowerCase().startsWith('w'));
         femaleData = allData.filter(r => r['Gender'].toLowerCase().startsWith('w'));
+
+// --- Filter nach Mindestpunkten ---
+// erst jetzt, nachdem alle Punkte berechnet wurden
+maleData = maleData.filter(r => parseFloat(r['Punkte']) >= MIN_POINTS);
+femaleData = femaleData.filter(r => parseFloat(r['Punkte']) >= MIN_POINTS);
 
         // --- Sortieren nach Punkten ---
         maleData.sort((a, b) => b['Punkte'] - a['Punkte']);
@@ -516,33 +523,3 @@ init();
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
