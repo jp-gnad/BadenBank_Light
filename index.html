@@ -16,6 +16,7 @@ table {
     margin-bottom: 10px;
     min-width: 700px;
     font-size: 0.8em
+	color: rgb(87, 87, 86);
 }
 th, td {
     border: 1px solid #ddd;
@@ -208,7 +209,7 @@ function renderTable(containerId, data, page) {
         }
 
        // Spaltenbreite setzen
-		if (index === 0) th.style.width = '18%'; // Name
+		if (index === 0) th.style.width = '19%'; // Name
 		else if (index === 1) th.style.width = '7%'; // Punkte
 		else th.style.width = ''; // restliche Spalten automatisch
 
@@ -492,6 +493,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
