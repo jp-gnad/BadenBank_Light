@@ -265,7 +265,7 @@ if (h.toLowerCase() === 'punkte') {
             color = 'rgb(127,6,19)'; // Frauenfarbe
         }
 
-        cellContent += `<br><span style="font-size:6px; color:${color};">Vorläufig Gesetzt</span>`;
+		cellContent += `<span style="font-size:6px; display:block; line-height:1; margin:0; padding:0; color:${color};">Vorläufig Gesetzt</span>`;
     }
 
     td.innerHTML = cellContent;
@@ -515,6 +515,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
