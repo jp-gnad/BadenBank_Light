@@ -12,83 +12,39 @@ body {
 table {
     border-collapse: collapse;
     width: 100%;
+    table-layout: fixed;
     margin-bottom: 10px;
-    font-size: 0.8em;
+    min-width: 600px;
+    font-size: 0.8em
 }
-
-/* horizontales Scrollen ermöglichen */
-.table-container {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    width: 100%;
-}
-
-}
-
-/* Standard-Zellen */
 th, td {
     border: 1px solid #ddd;
     padding: 8px;
     word-wrap: break-word;
 }
-
-/* Tabellenkopf */
 thead th {
     background: #f4f4f4;
-    text-align: center;
 }
-
-/* Zeilenüberschriften */
 th[scope="row"] {
     font-weight: 600;
     background: #fafafa;
     text-align: left;
 }
-
-td {
+td, thead th {
     text-align: center;
 }
-
 caption {
     font-weight: 700;
     margin-bottom: 8px;
 }
-
 .button-container {
     text-align: right;
     margin-bottom: 20px;
 }
-
 .button-container button {
     padding: 5px 10px;
     margin-left: 5px;
 }
-
-.table-container table {
-	table-layout: fixed; /* stabile Spaltenbreiten */
-    width: 100%;          /* Tabelle passt sich Container an */
-    border-collapse: collapse; /* Zellenränder bleiben sichtbar */
-}
-
-/* Zusatz: Ab 600px wieder table-layout: fixed aktivieren */
-@media screen and (max-width: 600px) {
-    /* scrollbarer Container */
-    .table-container {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch; /* sanftes Scrollen auf iOS */
-    }
-
-    /* Tabelle selbst */
-    .table-container table {
-        table-layout: fixed;
-        min-width: 1200px; /* breiter als Bildschirm */
-        width: 100%;
-    }
-
-	/* Tabelle und Spaltenbreite für Handys anpassen */
-}
-
-
 </style>
 </head>
 <body>
@@ -214,28 +170,16 @@ function renderTable(containerId, data, page) {
 
     // Scroll-Container erstellen
     const scrollDiv = document.createElement('div');
-	scrollDiv.classList.add('table-container');
-	scrollDiv.style.overflowX = 'auto';
-	scrollDiv.style.width = '100%';
-
+    scrollDiv.style.overflowX = 'auto';  // horizontales Scrollen aktivieren
+    scrollDiv.style.width = '100%';
 
     const table = document.createElement('table');
-
-	// --- NEU: Colgroup für Spaltenbreiten ---
-	const colgroup = document.createElement('colgroup');
-	const colWidths = [100, 55, 100, 90, 90, 90, 90, 90]; // Breiten für Handy
-	colWidths.forEach(width => {
-	    const col = document.createElement('col');
-	    col.style.width = width + 'px';
-	    colgroup.appendChild(col);
-	});
-	table.appendChild(colgroup); // Muss vor thead kommen
-
 
     // --- THEAD ---
     const thead = document.createElement('thead');
     const trHeader = document.createElement('tr');
 
+    // Sichtbare Header: Name (Spalte B = headers[1]), dann Disziplinen bis vor den letzten 2 Spalten
     const visibleHeaders = [headers[1], ...headers.slice(2, headers.length - 3)];
 
     visibleHeaders.forEach((h, index) => {
@@ -257,7 +201,11 @@ function renderTable(containerId, data, page) {
                     : '');
         }
 
-        // **WICHTIG**: keine Inline-Breiten mehr setzen
+        // Spaltenbreite setzen
+        if (index === 0) th.style.width = '13%'; // Name
+        else if (index === 1) th.style.width = '5%'; // Punkte
+        else th.style.width = ''; // restliche Spalten automatisch
+
         th.style.textAlign = 'center';
         if (h === headers[1]) th.style.textAlign = 'left';
         trHeader.appendChild(th);
@@ -271,48 +219,51 @@ function renderTable(containerId, data, page) {
     pageRows.forEach((row, idx) => {
         const tr = document.createElement('tr');
 
+        // Top-6 Highlight (global, nicht nur pro Seite)
         const globalIndex = start + idx;
         if (globalIndex < 6) {
-            if (containerId === 'male-table') tr.style.backgroundColor = 'rgba(173, 216, 230, 0.4)';
-            else if (containerId === 'female-table') tr.style.backgroundColor = 'rgba(255, 182, 193, 0.4)';
+            if (containerId === 'male-table') {
+                tr.style.backgroundColor = 'rgba(173, 216, 230, 0.4)'; // hellblau
+            } else if (containerId === 'female-table') {
+                tr.style.backgroundColor = 'rgba(255, 182, 193, 0.4)'; // hellrot/rosa
+            }
         }
 
         visibleHeaders.forEach(h => {
             const td = document.createElement('td');
-
-            if (h.toLowerCase() === 'punkte') {
-                td.textContent = row['Punkte'];
-            } else if (h.toLowerCase() === 'name') {
-                const name = row[headers[1]] || '';
-                let year = row[headers[11]];
-                if (year !== undefined && year !== '') {
-                    year = parseInt(year, 10);
-                    const yearStr = String(year).padStart(2, '0');
-                    td.textContent = `${name} - ${yearStr}`;
-                } else {
-                    td.textContent = name;
-                }
-            } else {
-                const t = parseTime(row[h]);
-                const wk = row[h + '_wk'] || '';
-                td.innerHTML = t
-                    ? `${formatTime(t)}<br><small style="font-size:0.7em; display:block; line-height:1; margin:0; padding:0;">${wk}</small>`
-                    : '';
-            }
+if (h.toLowerCase() === 'punkte') {
+    td.textContent = row['Punkte'];
+} else if (h.toLowerCase() === 'name') { // Name-Spalte
+    const name = row[headers[1]] || ''; // Spalte A
+    let year = row[headers[11]];        // Spalte J
+    if (year !== undefined && year !== '') {
+        year = parseInt(year, 10);
+        const yearStr = String(year).padStart(2, '0');
+        td.textContent = `${name} - ${yearStr}`;
+    } else {
+        td.textContent = name;
+    }
+} else { // alle anderen Spalten
+    const t = parseTime(row[h]); // Zeit
+    const wk = row[h + '_wk'] || ''; // Wettkampf
+    td.innerHTML = t
+        ? `${formatTime(t)}<br><small style="font-size:0.7em; display:block; line-height:1; margin:0; padding:0;">${wk}</small>`
+        : '';
+}
 
             td.style.textAlign = h === headers[1] ? 'left' : 'center';
-
-            // Abgesagte anzeigen
-            if (h.toLowerCase() === 'punkte') {
-                if (isCanceled(row['Name'])) {
-                    td.textContent = 'Abgesagt';
-                    td.style.color = 'rgb(227,6,19)';
-                } else {
-                    td.style.color = '';
-                }
-            }
-
             tr.appendChild(td);
+
+if (h.toLowerCase() === 'punkte') {
+    // Abgesagte → statt Punkten "Abgesagt" anzeigen
+    if (isCanceled(row['Name'])) {
+        td.textContent = 'Abgesagt';
+	td.style.color = 'rgb(227,6,19)'; // Rot
+    } else {
+        td.textContent = row['Punkte'] !== undefined ? row['Punkte'] : '';
+	td.style.color = '';
+    }
+}
         });
 
         tbody.appendChild(tr);
@@ -322,15 +273,16 @@ function renderTable(containerId, data, page) {
     scrollDiv.appendChild(table);
     container.appendChild(scrollDiv);
 
-    // Filter: mindestens 3 Disziplinen
-    let rowsArr = Array.from(tbody.querySelectorAll('tr'));
-    rowsArr.forEach(tr => {
-        const cells = Array.from(tr.querySelectorAll('td')).slice(2);
-        const validCount = cells.reduce((count, td) => td.textContent.trim() !== '' ? count + 1 : count, 0);
-        if (validCount < 3) tr.remove();
-    });
-}
+// --- Filter: mindestens 3 Disziplinen ---
+let rows = Array.from(tbody.querySelectorAll('tr'));
+rows.forEach(tr => {
+    const cells = Array.from(tr.querySelectorAll('td')).slice(2); // nur Disziplinen-Spalten
+    const validCount = cells.reduce((count, td) => td.textContent.trim() !== '' ? count + 1 : count, 0);
+    if (validCount < 3) tr.remove();
+});
 
+
+}
 
 
 
@@ -534,27 +486,3 @@ init();
 </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
