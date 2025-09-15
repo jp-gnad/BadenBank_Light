@@ -14,7 +14,7 @@ table {
     width: 100%;
     table-layout: fixed;
     margin-bottom: 10px;
-    min-width: 1000px;
+    min-width: 800px;
     font-size: 0.8em
 }
 th, td {
@@ -208,8 +208,8 @@ function renderTable(containerId, data, page) {
         }
 
         // Spaltenbreite setzen
-        if (index === 0) th.style.width = '13%'; // Name
-        else if (index === 1) th.style.width = '5%'; // Punkte
+        if (index === 0) th.style.width = '20%'; // Name
+        else if (index === 1) th.style.width = '10%'; // Punkte
         else th.style.width = ''; // restliche Spalten automatisch
 
         th.style.textAlign = 'center';
@@ -492,6 +492,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
