@@ -221,8 +221,10 @@ function renderTable(containerId, data, page) {
 
     // Scroll-Container erstellen
     const scrollDiv = document.createElement('div');
-    scrollDiv.style.overflowX = 'auto';  // horizontales Scrollen aktivieren
-    scrollDiv.style.width = '100%';
+	scrollDiv.classList.add('table-container');
+	scrollDiv.style.overflowX = 'auto';
+	scrollDiv.style.width = '100%';
+
 
     const table = document.createElement('table');
 
@@ -528,6 +530,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
