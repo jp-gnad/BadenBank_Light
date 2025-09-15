@@ -275,7 +275,7 @@ if (h.toLowerCase() === 'punkte') {
     const t = parseTime(row[h]);            // Zeit parsen
     const wk = row[h + '_wk'] || '';        // Wettkampfinfo
     td.innerHTML = t
-        ? `${formatTime(t)}<br><small style="font-size:0.7em; display:block; line-height:1; margin:0; padding:0;">${wk}</small>`
+        ? `${formatTime(t)}<br><small style="color:#a0a0a0;font-size:0.7em; display:block; line-height:1; margin:0; padding:0;">${wk}</small>`
         : '';
 }
 
@@ -516,6 +516,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
