@@ -208,9 +208,15 @@ function renderTable(containerId, data, page) {
         }
 
         // Spaltenbreite setzen
-        if (index === 0) th.style.width = 'max-content'; // Name
-        else if (index === 1) th.style.width = ''; // Punkte
-        else th.style.width = ''; // restliche Spalten automatisch
+        f (index === 0) {
+		    th.style.width = 'max-content';  // Breite nach Inhalt
+		    th.style.whiteSpace = 'nowrap';   // kein Zeilenumbruch
+		} else if (index === 1) {
+		    th.style.width = 'max-content';  
+		    th.style.whiteSpace = 'nowrap';
+		} else {
+		    th.style.width = '';  // restliche Spalten automatisch
+		}
 
         th.style.textAlign = 'center';
         if (h === headers[1]) th.style.textAlign = 'left';
@@ -492,6 +498,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
