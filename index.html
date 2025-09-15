@@ -207,16 +207,10 @@ function renderTable(containerId, data, page) {
                     : '');
         }
 
-        // Spaltenbreite setzen
-        if (index === 0) {
-		    th.style.width = 'min-content';  // Breite nach Inhalt
-		    th.style.whiteSpace = 'nowrap';   // kein Zeilenumbruch
-		} else if (index === 1) {
-		    th.style.width = 'max-content';  
-		    th.style.whiteSpace = 'nowrap';
-		} else {
-		    th.style.width = '';  // restliche Spalten automatisch
-		}
+       // Spaltenbreite setzen
+		if (index === 0) th.style.width = '18%'; // Name
+		else if (index === 1) th.style.width = '7%'; // Punkte
+		else th.style.width = ''; // restliche Spalten automatisch
 
         th.style.textAlign = 'center';
         if (h === headers[1]) th.style.textAlign = 'left';
@@ -251,7 +245,7 @@ if (h.toLowerCase() === 'punkte') {
     if (year !== undefined && year !== '') {
         year = parseInt(year, 10);
         const yearStr = String(year).padStart(2, '0');
-        td.textContent = `${name} - ${yearStr}`;
+        td.textContent = `${name} (${yearStr})`;
     } else {
         td.textContent = name;
     }
@@ -498,6 +492,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
