@@ -258,7 +258,7 @@ if (h.toLowerCase() === 'punkte') {
     // zusätzlicher Absatz für globalIndex < 6
     if (globalIndex < 6) {
         // Gender aus Spalte B
-		const geschlecht = (row[headers[1]] || 'm').toString().toLowerCase();
+		const geschlecht = (row[headers[0]] || 'm').toString().toLowerCase();
 		
 		// Farbe abhängig vom Gender
 		let color = 'rgb(5,105,180)'; // Männerfarbe
@@ -516,6 +516,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
