@@ -208,8 +208,8 @@ function renderTable(containerId, data, page) {
         }
 
         // Spaltenbreite setzen
-        if (index === 0) th.style.width = '18%'; // Name
-        else if (index === 1) th.style.width = '8%'; // Punkte
+        if (index === 0) th.style.width = ''; // Name
+        else if (index === 1) th.style.width = ''; // Punkte
         else th.style.width = ''; // restliche Spalten automatisch
 
         th.style.textAlign = 'center';
@@ -492,6 +492,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
