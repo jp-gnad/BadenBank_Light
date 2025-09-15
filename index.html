@@ -441,7 +441,7 @@ async function loadAndShow() {
 
             // Top 4 Punkte summieren
             pointsArr.sort((a, b) => b - a);
-            r['Punkte'] = Math.round(pointsArr.slice(0, 4).reduce((a, b) => a + b, 0) * 100) / 100;
+            r['Punkte'] = (pointsArr.slice(0, 4).reduce((a, b) => a + b, 0)).toFixed(2).replace('.', ',');
         });
 
         // --- Daten nach Geschlecht filtern ---
@@ -516,6 +516,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
