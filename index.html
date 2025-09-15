@@ -240,12 +240,15 @@ function renderTable(containerId, data, page) {
         visibleHeaders.forEach(h => {
             const td = document.createElement('td');
 if (h.toLowerCase() === 'punkte') {
+    // Punkte-Spalte
     td.textContent = row['Punkte'];
-} else if (h.toLowerCase() === 'name') { // Name-Spalte
-    const name = row[headers[1]] || ''; // Spalte A
-    let year = row[headers[11]];        // Spalte J
+} else if (h.toLowerCase() === 'name') { 
+    // Name-Spalte
+    const name = row[headers[1]] || ''; // Name aus Spalte A
+    let year = row[headers[11]];        // Jahr aus Spalte J
     let cellContent = name;
 
+    // Jahr hinzufügen, falls vorhanden
     if (year !== undefined && year !== '') {
         year = parseInt(year, 10);
         const yearStr = String(year).padStart(2, '0');
@@ -254,17 +257,27 @@ if (h.toLowerCase() === 'punkte') {
 
     // zusätzlicher Absatz für globalIndex < 6
     if (globalIndex < 6) {
-        cellContent += `<br><span style="font-size:6px;">Vorläufig Gesetzt</span>`;
+        // Geschlecht bestimmen (männlich = default)
+        const geschlecht = (row['Geschlecht'] || row['gender'] || 'm').toString().toLowerCase();
+        let color = 'rgb(5,105,180)'; // Männerfarbe
+
+        if (geschlecht === 'w' || geschlecht === 'frau' || geschlecht === 'female') {
+            color = 'rgb(127,6,19)'; // Frauenfarbe
+        }
+
+        cellContent += `<br><span style="font-size:6px; color:${color};">Vorläufig Gesetzt</span>`;
     }
 
     td.innerHTML = cellContent;
-} else { // alle anderen Spalten
-    const t = parseTime(row[h]); // Zeit
-    const wk = row[h + '_wk'] || ''; // Wettkampf
+} else { 
+    // alle anderen Spalten
+    const t = parseTime(row[h]);            // Zeit parsen
+    const wk = row[h + '_wk'] || '';        // Wettkampfinfo
     td.innerHTML = t
         ? `${formatTime(t)}<br><small style="font-size:0.7em; display:block; line-height:1; margin:0; padding:0;">${wk}</small>`
         : '';
 }
+
 
 
             td.style.textAlign = h === headers[1] ? 'left' : 'center';
@@ -502,6 +515,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
