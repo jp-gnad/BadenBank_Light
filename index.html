@@ -20,7 +20,7 @@ table {
 .table-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    width: auto;
+    width: 100%;
 }
 
 }
@@ -64,6 +64,12 @@ caption {
     margin-left: 5px;
 }
 
+.table-container table {
+	table-layout: fixed; /* stabile Spaltenbreiten */
+    width: 100%;          /* Tabelle passt sich Container an */
+    border-collapse: collapse; /* Zellenränder bleiben sichtbar */
+}
+
 /* Zusatz: Ab 600px wieder table-layout: fixed aktivieren */
 @media screen and (max-width: 600px) {
     /* scrollbarer Container */
@@ -73,7 +79,7 @@ caption {
     }
 
     /* Tabelle selbst */
-    *.table-container table {
+    .table-container table {
         table-layout: fixed;
         min-width: 1200px; /* breiter als Bildschirm */
         width: 100%;
@@ -528,6 +534,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
