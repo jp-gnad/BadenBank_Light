@@ -208,7 +208,7 @@ function renderTable(containerId, data, page) {
         }
 
         // Spaltenbreite setzen
-        if (index === 0) th.style.width = 'auto'; // Name
+        if (index === 0) th.style.width = 'min-content'; // Name
         else if (index === 1) th.style.width = ''; // Punkte
         else th.style.width = ''; // restliche Spalten automatisch
 
@@ -492,6 +492,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
