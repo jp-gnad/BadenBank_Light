@@ -62,12 +62,14 @@ caption {
 <div class="button-container">
     <button id="male-prev">Zurück</button>
     <button id="male-next">Weiter</button>
+	<span id="male-page-indicator" style="font-size:0.8em; margin-left:10px;"></span>
 </div>
 <h2>Frauen</h2>
 <div id="female-table"></div>
 <div class="button-container">
     <button id="female-prev">Zurück</button>
     <button id="female-next">Weiter</button>
+	<span id="female-page-indicator" style="font-size:0.8em; margin-left:10px;"></span>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -218,6 +220,15 @@ function renderTable(containerId, data, page) {
         th.style.textAlign = 'center';
         if (h === headers[1]) th.style.textAlign = 'left';
         trHeader.appendChild(th);
+
+		// --- Page Indicator aktualisieren ---
+		const totalPages = Math.ceil(data.length / PAGE_SIZE);
+		const currentPage = page + 1; // für Menschen: 1-basiert
+		if(containerId === 'male-table') {
+		    document.getElementById('male-page-indicator').textContent = `Seite ${currentPage} von ${totalPages}`;
+		} else if(containerId === 'female-table') {
+		    document.getElementById('female-page-indicator').textContent = `Seite ${currentPage} von ${totalPages}`;
+		}
     });
 
     thead.appendChild(trHeader);
@@ -523,3 +534,4 @@ init();
 </script>
 </body>
 </html>
+
