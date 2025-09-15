@@ -217,7 +217,7 @@ function renderTable(containerId, data, page) {
 
 	// --- NEU: Colgroup für Spaltenbreiten ---
 	const colgroup = document.createElement('colgroup');
-	const colWidths = [120, 55, 100, 100, 100, 100, 100, 100]; // Breiten für Handy
+	const colWidths = [100, 55, 100, 90, 90, 90, 90, 90]; // Breiten für Handy
 	colWidths.forEach(width => {
 	    const col = document.createElement('col');
 	    col.style.width = width + 'px';
@@ -528,6 +528,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
