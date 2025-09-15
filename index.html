@@ -228,6 +228,17 @@ function renderTable(containerId, data, page) {
 
     const table = document.createElement('table');
 
+	// --- NEU: Colgroup für Spaltenbreiten ---
+	const colgroup = document.createElement('colgroup');
+	const colWidths = [200, 50, 120, 120, 120, 120, 120, 120]; // Breiten für Handy
+	colWidths.forEach(width => {
+	    const col = document.createElement('col');
+	    col.style.width = width + 'px';
+	    colgroup.appendChild(col);
+	});
+	table.appendChild(colgroup); // Muss vor thead kommen
+
+
     // --- THEAD ---
     const thead = document.createElement('thead');
     const trHeader = document.createElement('tr');
@@ -530,6 +541,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
