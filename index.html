@@ -209,7 +209,7 @@ function renderTable(containerId, data, page) {
 
         // Spaltenbreite setzen
         if (index === 0) {
-		    th.style.width = 'max-content';  // Breite nach Inhalt
+		    th.style.width = 'min-content';  // Breite nach Inhalt
 		    th.style.whiteSpace = 'nowrap';   // kein Zeilenumbruch
 		} else if (index === 1) {
 		    th.style.width = 'max-content';  
@@ -498,6 +498,7 @@ init();
 </script>
 </body>
 </html>
+
 
 
 
